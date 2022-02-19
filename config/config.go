@@ -4,6 +4,8 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
+	"io/ioutil"
 	"log"
 	"strings"
 
@@ -18,10 +20,18 @@ type Configuration struct {
 		ClientID     string `yaml:"client_id"`
 		ClientSecret string `yaml:"client_secret"`
 		ApiKey       string `yaml:"api_key"`
+		Monitoring   bool   `yaml:"monitoring"`
 	} `yaml:"common"`
 	VerifyKey *rsa.PublicKey
 	SignKey   *rsa.PrivateKey
 	UserID    string
+}
+
+// MutableConfig contains configuration fields that can be modified without
+// interacting directly with the config file. Its fields are pointers, so we can
+// depend on nil checks to see if a Configuration field should be changed
+type MutableConfig struct {
+	Monitoring *bool
 }
 
 var Cfg Configuration
@@ -90,9 +100,26 @@ func JWTToString(tokenString string) (string, error) {
 	return claims.Text, nil
 }
 
-// Create a struct that will be encoded to a JWT.
+// Claims is a struct that will be encoded to a JWT.
 // We add jwt.StandardClaims as an embedded type, to provide fields like expiry time
 type Claims struct {
 	Text string `json:"text"`
 	jwt.StandardClaims
+}
+
+// UpdateConfig updates the modified fields in Spinup's configuration and persist the changes to the yaml file
+func (cfg Configuration) UpdateConfig(mc MutableConfig) error {
+	if mc.Monitoring != nil {
+		cfg.Common.Monitoring = *mc.Monitoring
+	}
+
+	data, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(cfg.Common.ProjectDir+"/config.yaml", data, 0)
+	if err != nil {
+		return err
+	}
+	return nil
 }
