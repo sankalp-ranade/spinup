@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/spinup-host/config"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -58,6 +59,7 @@ func CreateDockerComposeFile(absolutepath string, s service) error {
 		MinVersion       uint
 		PostgresUsername string
 		PostgresPassword string
+		NetworkName      string
 	}{
 		s.UserID,
 		s.Architecture,
@@ -67,6 +69,7 @@ func CreateDockerComposeFile(absolutepath string, s service) error {
 		s.Version.Min,
 		s.Db.Username,
 		s.Db.Password,
+		config.DefaultNetwork,
 	}
 	err = templ.Execute(f, data)
 	if err != nil {

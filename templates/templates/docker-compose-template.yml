@@ -11,5 +11,13 @@ services:
       POSTGRES_PASSWORD: {{ .PostgresPassword }}
     volumes:
       - data-volume-{{ .UserID }}:/var/lib/postgresql/data
+    networks:
+      - {{ .NetworkName }}
+
 volumes:
   data-volume-{{ .UserID }}:
+
+networks:
+  {{ .NetworkName }}:
+    external: true
+    name: {{ .NetworkName }}

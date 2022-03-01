@@ -15,12 +15,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spinup-host/internal/dockerservice"
-
 	"github.com/docker/docker/client"
 	"github.com/robfig/cron/v3"
 	"github.com/spinup-host/backup"
 	"github.com/spinup-host/config"
+	"github.com/spinup-host/internal/dockerservice"
 	"github.com/spinup-host/misc"
 	_ "modernc.org/sqlite"
 )
@@ -122,7 +121,7 @@ func CreateService(w http.ResponseWriter, req *http.Request) {
 	s.Db.Port, err = portcheck()
 	s.Architecture = config.Cfg.Common.Architecture
 	servicePath := config.Cfg.Common.ProjectDir + "/" + s.UserID + "/" + s.Db.Name
-	s.DockerNetwork = fmt.Sprintf("%s_default", s.Db.Name) // following docker-compose naming format for compatibility
+	s.DockerNetwork = config.DefaultNetwork
 	if err = prepareService(s, servicePath); err != nil {
 		log.Printf("ERROR: preparing service for %s %v", s.UserID, err)
 		http.Error(w, "Error preparing service", 500)
@@ -230,7 +229,7 @@ func startService(s service, path string) (serviceContainerID string, err error)
 			return serviceContainerID, err
 		}
 
-		pgExporter := dockerservice.NewPgExporterService(cli, s.DockerNetwork, s.Db.Name, s.Db.Username, s.Db.Password)
+		pgExporter := dockerservice.NewPgExporterService(cli, config.DefaultNetwork, s.Db.Name, s.Db.Username, s.Db.Password)
 		if err := pgExporter.Start(); err != nil {
 			return serviceContainerID, err
 		}

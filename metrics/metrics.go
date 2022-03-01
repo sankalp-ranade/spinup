@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -15,15 +14,6 @@ import (
 func HandleMetrics(w http.ResponseWriter, req *http.Request) {
 	if (*req).Method != "GET" {
 		http.Error(w, "Invalid Method", http.StatusMethodNotAllowed)
-		return
-	}
-	authHeader := req.Header.Get("Authorization")
-	apiKeyHeader := req.Header.Get("x-api-key")
-	var err error
-	config.Cfg.UserID, err = config.ValidateUser(authHeader, apiKeyHeader)
-	if err != nil {
-		log.Printf(err.Error())
-		http.Error(w, "error validating user", http.StatusUnauthorized)
 		return
 	}
 	recordMetrics()

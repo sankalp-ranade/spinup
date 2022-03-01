@@ -24,7 +24,7 @@ type DockerService struct {
 	RestartPolicy   string            `yaml:"restart"`
 	Ports           map[int]int       `yaml:"ports"`
 	Environment     map[string]string `yaml:"environment"`
-	Volumes         []string          `yaml:"volumes"`
+	Volumes         map[string]string `yaml:"volumes"`
 	Image           string            `yaml:"image"`
 	RemoveContainer bool              `yaml:"remove_container"`
 }
@@ -48,6 +48,11 @@ func (ds DockerService) buildArgs() []string {
 	// Remove container
 	if ds.RemoveContainer {
 		args = append(args, "--rm")
+	}
+
+	// Container volumes
+	for dst, src := range ds.Volumes {
+		args = append(args, "-v", dst+":"+src)
 	}
 
 	args = append(args, ds.Image)
@@ -78,7 +83,7 @@ func (ds DockerService) Start() (err error) {
 func NewPgExporterService(cli *client.Client, networkName, dbName, postgresUsername, postgresPassword string) DockerService {
 	exporterSvc := DockerService{
 		DockerClient:  cli,
-		Name:          "postgres_exporter",
+		Name:          "postgres_exporter_"+dbName,
 		NetworkName:   networkName,
 		RestartPolicy: "unless-stopped",
 		Ports: map[int]int{

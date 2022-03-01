@@ -10,6 +10,10 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+const (
+	DefaultNetwork = string("spinup_services")
+)
+
 type Configuration struct {
 	Common struct {
 		Architecture string `yaml:"architecture"`

@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -10,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -73,6 +76,20 @@ func startCmd() *cobra.Command {
 			}
 			log.Println("INFO: initial validations successful")
 
+			// create default docker network if none exists
+			ctx := context.Background()
+			cli, err := client.NewClientWithOpts(client.FromEnv)
+			res, err := cli.NetworkCreate(ctx, config.DefaultNetwork, types.NetworkCreate{CheckDuplicate: true})
+			if err != nil {
+				networkExistsError := fmt.Sprintf("network with name %s already exists", config.DefaultNetwork)
+				if !strings.Contains(err.Error(), networkExistsError) {
+					log.Fatalf("FATAL: could not create docker network: %v", err)
+				}
+			}
+
+			if res.Warning != "" {
+				log.Println(res.Warning)
+			}
 			apiListener, err := net.Listen("tcp", apiPort)
 			if err != nil {
 				log.Fatalf("FATAL: starting API server %v", err)
